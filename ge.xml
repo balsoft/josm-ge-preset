@@ -723,7 +723,7 @@
         <key key="amenity" value="fast_food" />
         <reference ref="eatery" />
       </item>
-      <item name="McDonald's" ka.name="ქიიეფსი" ru.name="Макдональдс" type="node,closedway,multipolygon" preset_name_label="true" icon="https://upload.wikimedia.org/wikipedia/commons/5/50/McDonald%27s_SVG_logo.svg">
+      <item name="McDonald's" ka.name="მაკდონალდსი" ru.name="Макдональдс" type="node,closedway,multipolygon" preset_name_label="true" icon="https://upload.wikimedia.org/wikipedia/commons/5/50/McDonald%27s_SVG_logo.svg">
         <key key="brand" value="მაკდონალდსი" />
         <key key="brand:ka" value="მაკდონალდსი" />
         <key key="brand:en" value="McDonald's" />

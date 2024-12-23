@@ -3,7 +3,8 @@ import sys
 import fileinput
 import os
 import json
-# import re
+import subprocess
+import re
 
 commonEntryKeys = { "locationSet": {"include": ["ge"]} }
 
@@ -48,12 +49,12 @@ def generate_tag_type_map(nsi_tree):
                     m[(key, value)] = "both"
     return m
 
-# def contains_georgian(text):
-#     # Define the regular expression pattern for Georgian script
-#     georgian_pattern = re.compile(r'[\u10A0-\u10FF\u2D00-\u2D2F0-9."" -]+')
+def contains_georgian(text):
+    # Define the regular expression pattern for Georgian script
+    georgian_pattern = re.compile(r'[\u10A0-\u10FF\u2D00-\u2D2F0-9."" -]+')
     
-#     # Search for the pattern in the input text
-#     return georgian_pattern.match(text)
+    # Search for the pattern in the input text
+    return georgian_pattern.match(text)
 
 def good(text):
     sys.stderr.write("\033[0;32m%s\033[0m\n" % text)
@@ -74,66 +75,72 @@ def handle_group(nsi_tree, group, parent_fallback_type=None, tag_type_cache=None
         displayName = item.attrib["ka.name"] if "ka.name" in item.attrib else item.attrib["name"]
         tags = {}
         for key in item.findall('{http://josm.openstreetmap.de/tagging-preset-1.0}key'):
+            if key.attrib["key"].startswith("drink:"):
+                continue
             tags[key.attrib["key"]] = key.attrib["value"]
 
         keys = list(item.findall('{http://josm.openstreetmap.de/tagging-preset-1.0}key'))
 
         # ==== Used for xml fixup ====
         # This is really really bad, but I'm lazy and it works-ish
-        # for key in keys:
+        for key in keys:
 
-        #     some_kartuli_name = None
-        #     if contains_georgian(tags.get("name:ka", "")):
-        #         some_kartuli_name = tags["name:ka"]
-        #     if contains_georgian(tags.get("brand:ka", "")):
-        #         some_kartuli_name = tags["brand:ka"]
-        #     if contains_georgian(tags.get("operator:ka", "")):
-        #         some_kartuli_name = tags["operator:ka"]
+            some_kartuli_name = None
+            if contains_georgian(tags.get("name:ka", "")):
+                some_kartuli_name = tags["name:ka"]
+            if contains_georgian(tags.get("brand:ka", "")):
+                some_kartuli_name = tags["brand:ka"]
+            if contains_georgian(tags.get("operator:ka", "")):
+                some_kartuli_name = tags["operator:ka"]
 
-        #     if some_kartuli_name is not None:
-        #         if key.attrib["key"] == "name" and not contains_georgian(key.attrib["value"]):
-        #             if "name:ka" in tags and contains_georgian(tags["name:ka"]):
-        #                 tags["name"] = tags["name:ka"]
-        #                 key.attrib["value"] = tags["name:ka"]
-        #             else:
-        #                 tags["name"] = some_kartuli_name
-        #                 key.attrib["value"] = some_kartuli_name
-        #         if key.attrib["key"] == "brand" and not contains_georgian(key.attrib["value"]):
-        #             if "brand:ka" in tags and contains_georgian(tags["brand:ka"]):
-        #                 tags["brand"] = tags["brand:ka"]
-        #                 key.attrib["value"] = tags["brand:ka"]
-        #             else:
-        #                 tags["brand"] = some_kartuli_name
-        #                 key.attrib["value"] = some_kartuli_name
-        #         if key.attrib["key"] == "operator" and not contains_georgian(key.attrib["value"]):
-        #             if "operator:ka" in tags and contains_georgian(tags["operator:ka"]):
-        #                 tags["operator"] = tags["operator:ka"]
-        #                 key.attrib["value"] = tags["operator:ka"]
-        #             else:
-        #                 tags["operator"] = some_kartuli_name
-        #                 key.attrib["value"] = some_kartuli_name
+            if some_kartuli_name is not None:
+                if key.attrib["key"] == "name" and not contains_georgian(key.attrib["value"]):
+                    if "name:ka" in tags and contains_georgian(tags["name:ka"]):
+                        tags["name"] = tags["name:ka"]
+                        key.attrib["value"] = tags["name:ka"]
+                    else:
+                        tags["name"] = some_kartuli_name
+                        key.attrib["value"] = some_kartuli_name
+                if key.attrib["key"] == "brand" and not contains_georgian(key.attrib["value"]):
+                    if "brand:ka" in tags and contains_georgian(tags["brand:ka"]):
+                        tags["brand"] = tags["brand:ka"]
+                        key.attrib["value"] = tags["brand:ka"]
+                    else:
+                        tags["brand"] = some_kartuli_name
+                        key.attrib["value"] = some_kartuli_name
+                if key.attrib["key"] == "operator" and not contains_georgian(key.attrib["value"]):
+                    if "operator:ka" in tags and contains_georgian(tags["operator:ka"]):
+                        tags["operator"] = tags["operator:ka"]
+                        key.attrib["value"] = tags["operator:ka"]
+                    else:
+                        tags["operator"] = some_kartuli_name
+                        key.attrib["value"] = some_kartuli_name
 
-        #     if key.attrib["key"] == "name:ka" and not contains_georgian(key.attrib["value"]) and "name" in tags and contains_georgian(tags["name"]):
-        #         tags["name:ka"] = tags["name"]
-        #         key.attrib["value"] = tags["name"]
-        #     if key.attrib["key"] == "brand:ka" and not contains_georgian(key.attrib["value"]) and "brand" in tags and contains_georgian(tags["brand"]):
-        #         tags["brand:ka"] = tags["brand"]
-        #         key.attrib["value"] = tags["brand"]
-        #     if key.attrib["key"] == "operator:ka" and not contains_georgian(key.attrib["value"]) and "operator" in tags and contains_georgian(tags["operator"]):
-        #         tags["operator:ka"] = tags["operator"]
-        #         key.attrib["value"] = tags["operator"]
-        # for i in range(0, len(keys)):
-        #     key = keys[i]
-        #     # Hack: add in missing name:ka, brand:ka, operator:ka
-        #     if keys[i].attrib["key"] == "name" and not "name:ka" in tags:
-        #         tags["name:ka"] = tags["name"]
-        #         item.insert(i + 1, ET.Element("{http://josm.openstreetmap.de/tagging-preset-1.0}key", {"key": "name:ka", "value": tags["name"]}))
-        #     if keys[i].attrib["key"] == "brand" and not "brand:ka" in tags:
-        #         tags["brand:ka"] = tags["brand"]
-        #         item.insert(i + 1, ET.Element("{http://josm.openstreetmap.de/tagging-preset-1.0}key", {"key": "brand:ka", "value": tags["brand"]}))
-        #     if keys[i].attrib["key"] == "operator" and not "operator:ka" in tags:
-        #         tags["operator:ka"] = tags["operator"]
-        #         item.insert(i + 1, ET.Element("{http://josm.openstreetmap.de/tagging-preset-1.0}key", {"key": "operator:ka", "value": tags["operator"]}))
+            if key.attrib["key"] == "name:ka" and not contains_georgian(key.attrib["value"]) and "name" in tags and contains_georgian(tags["name"]):
+                tags["name:ka"] = tags["name"]
+                key.attrib["value"] = tags["name"]
+            if key.attrib["key"] == "brand:ka" and not contains_georgian(key.attrib["value"]) and "brand" in tags and contains_georgian(tags["brand"]):
+                tags["brand:ka"] = tags["brand"]
+                key.attrib["value"] = tags["brand"]
+            if key.attrib["key"] == "operator:ka" and not contains_georgian(key.attrib["value"]) and "operator" in tags and contains_georgian(tags["operator"]):
+                tags["operator:ka"] = tags["operator"]
+                key.attrib["value"] = tags["operator"]
+            if key.attrib["key"] == "contact:facebook" and "profile.php?id=" in key.attrib["value"]:
+                print("running", ["curl", "-Ls", "-w", "%{url_effective}", "-o", "/dev/null", key.attrib["value"]])
+                real_url = subprocess.check_output(["curl", "-Ls", "-w", "%{url_effective}", "-o", "/dev/null", key.attrib["value"]]).decode("utf-8")
+                key.attrib["value"] = real_url
+        for i in range(0, len(keys)):
+            key = keys[i]
+            # Hack: add in missing name:ka, brand:ka, operator:ka
+            if keys[i].attrib["key"] == "name" and not "name:ka" in tags:
+                tags["name:ka"] = tags["name"]
+                item.insert(i + 1, ET.Element("{http://josm.openstreetmap.de/tagging-preset-1.0}key", {"key": "name:ka", "value": tags["name"]}))
+            if keys[i].attrib["key"] == "brand" and not "brand:ka" in tags:
+                tags["brand:ka"] = tags["brand"]
+                item.insert(i + 1, ET.Element("{http://josm.openstreetmap.de/tagging-preset-1.0}key", {"key": "brand:ka", "value": tags["brand"]}))
+            if keys[i].attrib["key"] == "operator" and not "operator:ka" in tags:
+                tags["operator:ka"] = tags["operator"]
+                item.insert(i + 1, ET.Element("{http://josm.openstreetmap.de/tagging-preset-1.0}key", {"key": "operator:ka", "value": tags["operator"]}))
         # ============================
         
         # Identify the relevant file ({type}/{key}/{value}.json) to append this to
@@ -205,7 +212,7 @@ def __main__():
     input_file = sys.stdin
     fixup = os.environ.get("FIXUP_XML_FILE", None)
     if len(sys.argv) > 2:
-        input_file = open(sys.argv[2], "rw" if fixup else "r")
+        input_file = open(sys.argv[2], "r+" if fixup else "r")
 
     nsi_data = nsi_path + "/data"
     nsi_tree = read_dir_tree(nsi_data)

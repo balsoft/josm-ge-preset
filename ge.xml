@@ -3625,6 +3625,8 @@
         <key key="amenity" value="police" />
         <key key="operator" value="საქართველოს შინაგან საქმეთა სამინისტროს საპატრულო პოლიციის დეპარტამენტი" />
         <key key="operator:short" value="საპატრულო პოლიციი" />
+        <key key="operator:ka" value="საქართველოს შინაგან საქმეთა სამინისტროს საპატრულო პოლიციის დეპარტამენტი" />
+        <key key="operator:short:ka" value="საპატრულო პოლიციი" />
         <key key="operator:en" value="Patrol Police Departament of the Ministry of Internal Affairs of Georgia" />
         <key key="operator:short:en" value="Patrol Police" />
         <key key="operator:ru" value="Департамент патрульной полиции Министерства внутренних дел Грузии" />

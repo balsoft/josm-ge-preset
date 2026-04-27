@@ -274,6 +274,7 @@
     <key key="payment:jcb" value="yes" />
     <key key="payment:apple_pay" value="yes" />
     <key key="payment:google_pay" value="yes" />
+    <foo bar="baz" />
   </chunk>
   <chunk id="duty_free_assistance">
     <key key="duty_free" value="refund" />

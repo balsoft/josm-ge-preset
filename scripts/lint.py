@@ -34,6 +34,14 @@ class Issue:
         else:
             return "<unknown>"
 
+    def identifier(self):
+        if self.item is not None and self.tag is not None:
+            return f"{self.item.attrib["name"]}/{self.tag.attrib["key"]}"
+        elif self.item is not None:
+            return self.item.attrib["name"]
+        else:
+            return "<unknown>"
+
 
 def issues_with_item(item, issues):
     for issue in issues:
@@ -65,6 +73,7 @@ def fetch_wikidata_qid(qid: str) -> dict:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
         }
         url = f"https://www.wikidata.org/w/rest.php/wikibase/v1/entities/items/{qid}"
+        logging.debug(f"Fetching {url}")
         resp = requests.get(url, headers=headers)
         while resp.status_code == 429:
             delay = int(resp.headers["retry-after"])
@@ -268,6 +277,7 @@ def prepare_item_map(group: Element):
 
 
 def __main__():
+    logging.root.setLevel(os.environ.get("LINTER_DEBUG", "INFO"))
     diff_map = {}
     if len(sys.argv) > 2:
         diff_group = (
@@ -285,7 +295,7 @@ def __main__():
     if root_group is not None:
         for issue in check_group(root_group, diff_map):
             print(
-                f"{input_file}#{issue.location()}: {logging.getLevelName(issue.severity)}: {issue.item.attrib["name"] if issue.item else "<unknown>"}: {issue.message}"
+                f"{logging.getLevelName(issue.severity)}:{input_file}#{issue.location()} ({issue.identifier()}): {issue.message}"
             )
             exit_code = 1
 
